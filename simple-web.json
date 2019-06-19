@@ -1,0 +1,48 @@
+{
+  "min_packer_version": "1.4.0",
+  "variables": {
+    "name": "simple-php-web",
+    "description": "PHP web server that echoes IP addresses.",
+    "aws_region": "us-east-2"
+  },
+  "builders": [{
+    "name": "{{ user `name` }}",
+    "profile": "default",
+    "type": "amazon-ebs",
+    "region": "{{ user `aws_region` }}",
+    "ami_name": "{{ user `name` }}-{{isotime | clean_ami_name}}",
+    "ami_description": "{{ user `description` }}",
+    "instance_type": "t3.micro",
+    "source_ami_filter": {
+      "filters": {
+        "name": "ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*",
+        "virtualization-type": "hvm",
+        "architecture": "x86_64",
+        "root-device-type": "ebs",
+        "block-device-mapping.volume-type": "gp2"
+      },
+      "owners": ["099720109477"],
+      "most_recent": true
+    },
+    "ssh_username": "ubuntu",
+    "run_tags": {
+      "Name": "Packer Builder ({{ user `name` }})"
+    },
+    "tags": {
+      "Name": "{{ user `name` }}",
+      "packer": "true"
+    }
+  }],
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": [
+        "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for cloud-init...'; sleep 1; done"
+      ]
+    },
+    {
+      "type": "shell",
+      "script": "provision.sh"
+    }
+  ]
+}
